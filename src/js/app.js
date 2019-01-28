@@ -5,11 +5,24 @@ import * as d3Queue from 'd3-queue'
 import * as d3Voronoi from 'd3-voronoi'
 import { $ } from "./util"
 
+console.log('hello')
+
 let d3 = Object.assign({}, d3B, d3Select, d3Queue);
 
 const mapEl = $(".interactive-wrapper");
 
 let width = mapEl.getBoundingClientRect().width;
+
+let isMobile
+
+if(width < 400)
+{
+	isMobile = true
+}
+else
+{
+	isMobile = false
+}
 
 let allWidth = 300;
 let smallWidth = 200;
@@ -17,8 +30,9 @@ let radius = 140;
 let pointRadius = 5.5;
 let phyllotaxisRadius = 9;
 let smallPhyllotaxisRadius = 10;
+let padding = 12;
 
-const tooltip = d3.select('#nfl-tooltip')
+let tooltip = d3.select('#nfl-tooltip')
 
 
 if(width > 400){
@@ -49,12 +63,12 @@ let divAnalysts = d3.select("#analyst-wrapper")
 .append('span')
 .attr('class', 'sub-header')
 
-let svgPBP = d3.select("#pbp-wraper")
+let svgPBP = d3.select("#pbp-wrapper")
 .append('svg')
 .attr("width", smallWidth)
 .attr("height", smallWidth)
 
-let divPBP = d3.select("#pbp-wraper")
+let divPBP = d3.select("#pbp-wrapper")
 .append('div')
 .append('span')
 .attr('class', 'sub-header')
@@ -113,7 +127,9 @@ function ready(data){
 	.attr('cx', d => d.x)
     .attr('cy', d => d.y)
     .attr('transform', 'translate(' + (allWidth /2 ) + ',' + (allWidth /2) + ')')
-    .on('mouseover', (d,i) => {printTooltip(nodes[i])})
+    .on('mouseover', d => {printTooltip('over', svgAll, nodes[d.index])})
+    .on('mouseout', d => {printTooltip('out', svgAll, nodes[d.index])})
+    .on("mousemove", mousemove)
 
 
     divAll.html(nodes.filter(d => d.black == 'Yes').length + "/" +philoNodes.length)
@@ -137,7 +153,9 @@ function ready(data){
 	.attr('cx', d => d.x)
     .attr('cy', d => d.y)
     .attr('transform', 'translate(' + (smallWidth /2) + ',' + (smallWidth /2) + ')')
-    .on('mouseover', (d,i) => {printTooltip(nodes[i])})
+    .on('mouseover', d => {printTooltip('over',svgAnalysts, analysts[d.index])})
+    .on('mouseout', d => {printTooltip('out',svgAnalysts, analysts[d.index])})
+    .on("mousemove", mousemove)
 
     divAnalysts.html(analysts.filter(d => d.black == 'Yes').length + "/" +philoAnalysts.length)
 
@@ -160,7 +178,9 @@ function ready(data){
 	.attr('cx', d => d.x)
     .attr('cy', d => d.y)
     .attr('transform', 'translate(' + (smallWidth /2) + ',' + (smallWidth /2) + ')')
-    .on('mouseover', (d,i) => {printTooltip(nodes[i])})
+    .on('mouseover', d => printTooltip('over',svgPBP, pbp[d.index]))
+    .on('mouseout', d => printTooltip('out',svgPBP, pbp[d.index]))
+    .on("mousemove", mousemove)
 
     divPBP.html(pbp.filter(d => d.black == 'Yes').length + "/" +philoPBP.length)
 
@@ -174,8 +194,7 @@ function ready(data){
 		phyllotaxisSideline.attr("cy", d => d.y);
 	})
 
-    let phyllotaxisSideline = svgSideline.append('g')
-    .selectAll("circle")
+    let phyllotaxisSideline = svgSideline.selectAll("circle")
 	.data(philoSideline)
 	.enter()
 	.append("circle")
@@ -184,15 +203,34 @@ function ready(data){
 	.attr('cx', d => d.x)
     .attr('cy', d => d.y)
     .attr('transform', 'translate(' + (smallWidth /2) + ',' + (smallWidth /2) + ')')
-    .on('mouseover', (d,i) => {printTooltip(nodes[i])})
+    .on('mouseover', d => printTooltip('over', svgSideline, sidelines[d.index]))
+    .on('mouseout', d => printTooltip('out', svgSideline, sidelines[d.index]))
+    .on("mousemove", mousemove)
+
 
     divSideline.html(sidelines.filter(d => d.black == 'Yes').length + "/" + philoSideline.length)
 
+    function mousemove(event) {
+    	 
+    	let posX = document.getElementById('nfl-graphics').getBoundingClientRect().x
+    	let posY = document.getElementById('nfl-graphics').getBoundingClientRect().y
+    	
+		tooltip.style('left', (currentEvent.clientX  - posX) + padding+ 'px')
+		tooltip.style('top', (currentEvent.clientY  - posY) + padding + 'px')
+
+		let tWidth = +tooltip.style("width").split('px')[0]
+		let tLeft = +tooltip.style("left").split('px')[0]
+
+		if(tLeft + tWidth > width - padding)
+		{
+			tooltip.style('left', width - tWidth - padding + 'px')
+		}
+	}
 }
 
 
 function phyllotaxis(radius) {
-  let theta = 2.4;//Math.PI * (3 - Math.sqrt(5));
+  let theta = Math.PI * (3 - Math.sqrt(5));
   return function(i) {
     let r = radius * Math.sqrt(i);
     let a = theta * i;
@@ -212,9 +250,25 @@ function makeSimulation(){
 	return simulation
 }
 
-function printTooltip(node){
-	tooltip.select('#tooltip-name').html(node.name)
-	tooltip.select('#tooltip-ethnicity').html(node.black)
-	tooltip.select('#tooltip-role').html(node.role)
-	tooltip.select('#tooltip-network').html(node.network)
+function printTooltip(event,enviroment, node){
+
+	
+
+	if(event == 'over')
+	{
+		let circle = enviroment.select('.' + node.class.split(' ').join("."));
+		circle.style('stroke','black')
+		circle.style('stroke-width','3px')
+
+		tooltip.classed(" over", true);
+		tooltip.select('#tooltip-name').html(node.name)
+	}
+	else{
+
+		enviroment.selectAll('circle').style('stroke-width','0px')
+		tooltip.classed(" over", false);
+		
+	}
+
+	
 }
