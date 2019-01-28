@@ -2,153 +2,219 @@ import * as d3B from 'd3'
 import * as d3Select from 'd3-selection'
 import {event as currentEvent} from 'd3-selection';
 import * as d3Queue from 'd3-queue'
+import * as d3Voronoi from 'd3-voronoi'
 import { $ } from "./util"
 
 let d3 = Object.assign({}, d3B, d3Select, d3Queue);
 
-const dataURL = '<%= path %>/assets/EDITED Chief Executives MASTER final scores - ALL_VISUALS_EDITED_UNIQUE.csv';
-const dropDownMenu = d3.select('.dropdown .dropdown-content')
-const firstYear = 1998;
-const lastYear = 2018;
-const countries = ['Argentina','Armenia','Austria','Belarus','Bolivia','Brazil','Bulgaria','Canada','Chile','Colombia','Costa Rica','Croatia','Czech Republic','Dominican Republic','Ecuador','El Salvador','France','Germany','Guatemala','Honduras','Hungary','India','Italy','Latvia','Mexico','Moldova','Netherlands','Nicaragua','Norway','Panama','Paraguay','Peru','Poland','Romania','Russia','Slovakia','Spain','Sweden','Tajikistan','Turkey','UK','Ukraine','United States','Uruguay','Venezuela']
-
 const mapEl = $(".interactive-wrapper");
 
 let width = mapEl.getBoundingClientRect().width;
-let height = 300;
 
-let center = {x: width/2, y:height/2}
+let allWidth = 300;
+let smallWidth = 200;
+let radius = 140;
+let pointRadius = 5.5;
+let phyllotaxisRadius = 9;
+let smallPhyllotaxisRadius = 10;
 
-let populismCenters = {
-'out':{x:width/2, y: -2000},
-'NA':{x:width / 6, y:center.y},
-'Not populist':{x:(width / 6) * 2, y:center.y},
-'Somewhat populist':{x:(width / 6) * 3, y:center.y},
-'Populist':{x:(width / 6) * 4, y:center.y},
-'Very Populist':{x:(width / 6) * 5, y:center.y}
+const tooltip = d3.select('#nfl-tooltip')
+
+
+if(width > 400){
+	allWidth = 330;
+	smallWidth = 180;
+	radius = 150;
+	phyllotaxisRadius = 10;
+	smallPhyllotaxisRadius = 8.5;
 }
 
-let forceStrength = 0.03;
-
-let svg = null;
-let bubbles = null;
-let nodes = [];
-
-let simulation = d3.forceSimulation()
-.velocityDecay(0.2)
-.force('x', d3.forceX().strength(forceStrength).x(center.x))
-.force('y', d3.forceY().strength(forceStrength).y(center.y))
-.force('charge', d3.forceManyBody().strength(charge))
-// .on('tick', ticked);
-
-simulation.stop();
-
-svg = d3.select(".interactive-svg")
+let svgAll = d3.select("#all-broadcasters")
 .append('svg')
-.attr("width", width)
-.attr("height", height)
+.attr("width", allWidth)
+.attr("height", allWidth)
+
+let divAll = d3.select("#all-broadcasters")
+.append('div')
+.append('span')
+.attr('class', 'sub-header')
+
+let svgAnalysts = d3.select("#analyst-wrapper")
+.append('svg')
+.attr("width", smallWidth)
+.attr("height", smallWidth)
+
+let divAnalysts = d3.select("#analyst-wrapper")
+.append('div')
+.append('span')
+.attr('class', 'sub-header')
+
+let svgPBP = d3.select("#pbp-wraper")
+.append('svg')
+.attr("width", smallWidth)
+.attr("height", smallWidth)
+
+let divPBP = d3.select("#pbp-wraper")
+.append('div')
+.append('span')
+.attr('class', 'sub-header')
+
+let svgSideline = d3.select("#sideline-wrapper")
+.append('svg')
+.attr("width", smallWidth)
+.attr("height", smallWidth)
+
+let divSideline = d3.select("#sideline-wrapper")
+.append('div')
+.append('span')
+.attr('class', 'sub-header')
 
 Promise.all([
-	d3.csv(dataURL)
+	d3.csv("<%= path %>/assets/NFL Broadcasters - Sheet5.csv")
 	])
 .then(ready)
 
-function ready(csv){
+function ready(data){
 
-	let data = csv[0];
-
-	for (let i = lastYear; i >= firstYear; i--){
-
-		dropDownMenu
-		.datum(i)
-		.append('a')
-		.html(i)
-		.on('click', d => console.log(d))
-	}
-
-
-	countries.forEach(c => {
-
-		let speechCategory = null;
-
-		let node =  {
-        populist1998:speechCategory,
-        populist1999:speechCategory,
-        populist2000:speechCategory,
-        populist2001:speechCategory,
-        populist2002:speechCategory,
-        populist2003:speechCategory,
-        populist2004:speechCategory,
-        populist2005:speechCategory,
-        populist2006:speechCategory,
-        populist2007:speechCategory,
-        populist2008:speechCategory,
-        populist2009:speechCategory,
-        populist2010:speechCategory,
-        populist2011:speechCategory,
-        populist2012:speechCategory,
-        populist2013:speechCategory,
-        populist2014:speechCategory,
-        populist2015:speechCategory,
-        populist2016:speechCategory,
-        populist2017:speechCategory,
-        populist2018:speechCategory
-      };
-
-		let country = data.filter(d => d.country == c)
-		console.log(country[0].country)
-		let years = country.map(c => +c.yearbegin)
-		let populism = country.map(c => c.speech_category)
-
-		let localPopulism = speechCategory;
-
-		for (var i = firstYear; i <= lastYear; i++) {
-
-			if(years.indexOf(i) != -1){
-				localPopulism = populism[years.indexOf(i)];
-			}
-
-			node['populist' + i] = localPopulism
-
+	let nodes = data[0].map(d => {
+		return {
+			black: d.Black,
+			class:d.Name + ' ' + d.Black,
+			r: pointRadius,
+			name: d.Name,
+			role: d.Role,
+			network: d['Network/Team']
 		}
+	})
+	nodes.sort((a,b) => (a.black > b.black) ? 1 : ((b.black > a.black) ? -1 : 0)); 
+	nodes.reverse()
 
-		console.log(node)
+	let analysts = nodes.filter(d => d.role == 'Analyst')
+	let pbp = nodes.filter(d => d.role == 'Play-by-play')
+	let sidelines = nodes.filter(d => d.role == 'Sideline')
+
+	let philoNodes = d3.range(nodes.length).map(phyllotaxis(phyllotaxisRadius));
+
+	let s = makeSimulation();
+
+	s.nodes(philoNodes)
+	.on("tick", d => {
+		phyllotaxisNode.attr("cx", d => d.x)
+		phyllotaxisNode.attr("cy", d => d.y);
+	})
+	.on('end', d => {console.log(phyllotaxisNode)})
+
+	let phyllotaxisNode = svgAll.selectAll("circle")
+	.data(philoNodes)
+	.enter()
+	.append("circle")
+	.attr("class", d => nodes[d.index].class)
+	.attr("r", d => d.r )
+	.attr('cx', d => d.x)
+    .attr('cy', d => d.y)
+    .attr('transform', 'translate(' + (allWidth /2 ) + ',' + (allWidth /2) + ')')
+    .on('mouseover', (d,i) => {printTooltip(nodes[i])})
 
 
+    divAll.html(nodes.filter(d => d.black == 'Yes').length + "/" +philoNodes.length)
+
+    let philoAnalysts = d3.range(analysts.length).map(phyllotaxis(smallPhyllotaxisRadius));
+
+    let s1 = makeSimulation();
+
+	s1.nodes(philoAnalysts)
+	.on("tick", d => {
+		phyllotaxisAnalyst.attr("cx", d => d.x)
+		phyllotaxisAnalyst.attr("cy", d => d.y);
 	})
 
-	for(let i = 0; i < countries.length; i++){
+    let phyllotaxisAnalyst = svgAnalysts.selectAll("circle")
+	.data(philoAnalysts)
+	.enter()
+	.append("circle")
+	.attr("class", d => analysts[d.index].class)
+	.attr("r", d => d.r )
+	.attr('cx', d => d.x)
+    .attr('cy', d => d.y)
+    .attr('transform', 'translate(' + (smallWidth /2) + ',' + (smallWidth /2) + ')')
+    .on('mouseover', (d,i) => {printTooltip(nodes[i])})
 
+    divAnalysts.html(analysts.filter(d => d.black == 'Yes').length + "/" +philoAnalysts.length)
 
+    let philoPBP = d3.range(pbp.length).map(phyllotaxis(smallPhyllotaxisRadius));
 
+    let s2 = makeSimulation();
 
+	s2.nodes(philoPBP)
+	.on("tick", d => {
+		phyllotaxisPBP.attr("cx", d => d.x)
+		phyllotaxisPBP.attr("cy", d => d.y);
+	})
 
+    let phyllotaxisPBP = svgPBP.selectAll("circle")
+	.data(philoPBP)
+	.enter()
+	.append("circle")
+	.attr("class", d => pbp[d.index].class)
+	.attr("r", d => d.r )
+	.attr('cx', d => d.x)
+    .attr('cy', d => d.y)
+    .attr('transform', 'translate(' + (smallWidth /2) + ',' + (smallWidth /2) + ')')
+    .on('mouseover', (d,i) => {printTooltip(nodes[i])})
 
+    divPBP.html(pbp.filter(d => d.black == 'Yes').length + "/" +philoPBP.length)
 
+    let philoSideline = d3.range(sidelines.length).map(phyllotaxis(smallPhyllotaxisRadius));
 
+    let s3 = makeSimulation();
 
+	s3.nodes(philoSideline)
+	.on("tick", d => {
+		phyllotaxisSideline.attr("cx", d => d.x)
+		phyllotaxisSideline.attr("cy", d => d.y);
+	})
 
-		svg
-		.append('circle')
-		.attr('r', 5)
-		.attr('cx', (22 * i) + 5)
-		.attr('cy', height / 2)
-		.attr('class', countries[i])
+    let phyllotaxisSideline = svgSideline.append('g')
+    .selectAll("circle")
+	.data(philoSideline)
+	.enter()
+	.append("circle")
+	.attr("class", d => sidelines[d.index].class)
+	.attr("r", d => d.r )
+	.attr('cx', d => d.x)
+    .attr('cy', d => d.y)
+    .attr('transform', 'translate(' + (smallWidth /2) + ',' + (smallWidth /2) + ')')
+    .on('mouseover', (d,i) => {printTooltip(nodes[i])})
 
-		svg
-		.append('text')
-		.attr('transform', 'translate(' + (22 * i) +','+ ((height / 2) + 20) + ')')
-		.text(countries[i].substr(0,2))
+    divSideline.html(sidelines.filter(d => d.black == 'Yes').length + "/" + philoSideline.length)
 
-		d3.select('.Spain')
-		.attr('r', 0)
-
-	}
-
-	
 }
 
 
-function charge(d) {
-    return -Math.pow(d.radius, 2.0) * forceStrength;
- }
+function phyllotaxis(radius) {
+  let theta = 2.4;//Math.PI * (3 - Math.sqrt(5));
+  return function(i) {
+    let r = radius * Math.sqrt(i);
+    let a = theta * i;
+    return {
+      x: r * Math.cos(a),
+      y: r * Math.sin(a),
+      r: pointRadius
+    };
+  };
+}
+
+function makeSimulation(){
+	let simulation = d3.forceSimulation()
+	.force("collide", d3.forceCollide()
+	.radius(d => d.r))
+
+	return simulation
+}
+
+function printTooltip(node){
+	tooltip.select('#tooltip-name').html(node.name)
+	tooltip.select('#tooltip-ethnicity').html(node.black)
+	tooltip.select('#tooltip-role').html(node.role)
+	tooltip.select('#tooltip-network').html(node.network)
+}
