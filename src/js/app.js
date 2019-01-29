@@ -125,7 +125,7 @@ function ready(data){
 	.attr('clip-path', "url(#cut-off)")
 	.on('mouseover', (d,i) => {printTooltip('over', svgAll, nodes[i])})
 	.on('mouseout', (d,i) => {printTooltip('out', svgAll, nodes[i])})
-    .on("mousemove", mousemove)
+    .on("mousemove", ()=> {mousemove(allWidth) })
 
 
     let total = philoNodes.length;
@@ -265,7 +265,7 @@ function ready(data){
 	.attr('clip-path', "url(#cut-off)")
 	.on('mouseover', (d,i) => {printTooltip('over', svgSideline, sidelines[i])})
 	.on('mouseout', (d,i) => {printTooltip('out', svgSideline, sidelines[i])})
-    .on("mousemove", mousemove)
+    .on("mousemove", ()=> {mousemove(smallWidth) })
 
 
     let totalBlackSideline = sidelines.filter(d => d.black == 'Yes').length;
@@ -273,7 +273,7 @@ function ready(data){
 
     divSideline.html("<span id='nfl-bold'>Sidelines</span><br><span id='nfl-bold'>" + totalBlackSideline + "</span>/" + philoSideline.length + " <span id='nfl-bold-black'>"+ percentageSideline + "%</span>")
 
-    function mousemove(event) {
+    function mousemove(localWidth) {
     	 
     	let posX = document.getElementById('nfl-graphics').getBoundingClientRect().x
     	let posY = document.getElementById('nfl-graphics').getBoundingClientRect().y
@@ -284,9 +284,9 @@ function ready(data){
 		let tWidth = +tooltip.style("width").split('px')[0]
 		let tLeft = +tooltip.style("left").split('px')[0]
 
-		if(tLeft + tWidth > width - padding)
+		if(tLeft + tWidth > localWidth)
 		{
-			tooltip.style('left', width - tWidth - padding + 'px')
+			tooltip.style('left', tLeft - tWidth/*localWidth - tWidth - padding*/ + 'px')
 		}
 	}
 
