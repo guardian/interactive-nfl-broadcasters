@@ -96,7 +96,7 @@ function ready(data){
 	let nodes = data[0].map(d => {
 		return {
 			black: d.Black,
-			class:d.Name.split("'").join('') + ' ' + d.Black,
+			class:d.Name.split("'").join('').split('.').join('') + ' ' + d.Black,
 			r: pointRadius,
 			name: d.Name,
 			role: d.Role,

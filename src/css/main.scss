@@ -106,6 +106,7 @@
 }
 
 #all-broadcasters{
+  margin-right: 20px;
   @include mq(mobile) {
     margin-bottom: 20px
   }
