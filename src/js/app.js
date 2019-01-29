@@ -34,7 +34,6 @@ let padding = 12;
 
 let tooltip = d3.select('#nfl-tooltip')
 
-
 if(width > 400){
 	allWidth = 330;
 	smallWidth = 180;
@@ -42,6 +41,10 @@ if(width > 400){
 	phyllotaxisRadius = 10;
 	smallPhyllotaxisRadius = 8.5;
 }
+
+let voronoi = d3.voronoi()
+.extent([[-1, -1], [allWidth + 1, allWidth + 1]]);
+
 
 let svgAll = d3.select("#all-broadcasters")
 .append('svg')
@@ -84,7 +87,7 @@ let divSideline = d3.select("#sideline-wrapper")
 .attr('class', 'sub-header')
 
 Promise.all([
-	d3.csv("<%= path %>/assets/NFL Broadcasters - Sheet5.csv")
+	d3.csv("<%= path %>/assets/broadcasters - Sheet1.csv")
 	])
 .then(ready)
 
@@ -93,7 +96,7 @@ function ready(data){
 	let nodes = data[0].map(d => {
 		return {
 			black: d.Black,
-			class:d.Name + ' ' + d.Black,
+			class:d.Name.split("'").join('') + ' ' + d.Black,
 			r: pointRadius,
 			name: d.Name,
 			role: d.Role,
@@ -116,7 +119,7 @@ function ready(data){
 		phyllotaxisNode.attr("cx", d => d.x)
 		phyllotaxisNode.attr("cy", d => d.y);
 	})
-	.on('end', d => {console.log(phyllotaxisNode)})
+	.on('end', d => {})
 
 	let phyllotaxisNode = svgAll.selectAll("circle")
 	.data(philoNodes)
@@ -127,12 +130,34 @@ function ready(data){
 	.attr('cx', d => d.x)
     .attr('cy', d => d.y)
     .attr('transform', 'translate(' + (allWidth /2 ) + ',' + (allWidth /2) + ')')
-    .on('mouseover', d => {printTooltip('over', svgAll, nodes[d.index])})
-    .on('mouseout', d => {printTooltip('out', svgAll, nodes[d.index])})
+
+    let points = []
+
+    philoNodes.map(d=> {
+		points.push([+d.x + allWidth /2, +d.y + allWidth /2])
+	})
+
+	const polygons = voronoi(points).polygons();
+
+    let cells = svgAll.selectAll(".cell")
+	.data(polygons)
+	.enter()
+	.append("path")
+	.attr("class", (d,i) => {return "cell" + i})
+	.attr("opacity", 0)
+	.attr("stroke", "black")
+	.attr("d", (d,i) => {return "M" + d.join("L") + "Z"})
+	.attr('clip-path', "url(#cut-off)")
+	.on('mouseover', (d,i) => {printTooltip('over', svgAll, nodes[i])})
+	.on('mouseout', (d,i) => {printTooltip('out', svgAll, nodes[i])})
     .on("mousemove", mousemove)
 
 
-    divAll.html(nodes.filter(d => d.black == 'Yes').length + "/" +philoNodes.length)
+    let total = philoNodes.length;
+    let totalBlacks = nodes.filter(d => d.black == 'Yes').length;
+    let percentageTotal = Math.round(totalBlacks * 100 / total)
+
+    divAll.html("<span id='nfl-bold'>Total</span><br><span id='nfl-bold'>" + totalBlacks + "</span>/" + total + " <span id='nfl-bold-black'>"+ percentageTotal + "% black</span>")
 
     let philoAnalysts = d3.range(analysts.length).map(phyllotaxis(smallPhyllotaxisRadius));
 
@@ -153,11 +178,32 @@ function ready(data){
 	.attr('cx', d => d.x)
     .attr('cy', d => d.y)
     .attr('transform', 'translate(' + (smallWidth /2) + ',' + (smallWidth /2) + ')')
-    .on('mouseover', d => {printTooltip('over',svgAnalysts, analysts[d.index])})
-    .on('mouseout', d => {printTooltip('out',svgAnalysts, analysts[d.index])})
+
+    let points2 = []
+
+    philoAnalysts.map(d=> {
+		points2.push([+d.x + smallWidth /2, +d.y + smallWidth /2])
+	})
+
+	const polygons2 = voronoi(points2).polygons();
+
+    let cells2 = svgAnalysts.selectAll(".cell")
+	.data(polygons2)
+	.enter()
+	.append("path")
+	.attr("class", (d,i) => {return "cell" + i})
+	.attr("opacity", 0)
+	.attr("stroke", "black")
+	.attr("d", (d,i) => {return "M" + d.join("L") + "Z"})
+	.attr('clip-path', "url(#cut-off)")
+	.on('mouseover', (d,i) => {printTooltip('over', svgAnalysts, analysts[i])})
+	.on('mouseout', (d,i) => {printTooltip('out', svgAnalysts, analysts[i])})
     .on("mousemove", mousemove)
 
-    divAnalysts.html(analysts.filter(d => d.black == 'Yes').length + "/" +philoAnalysts.length)
+    let totalBlackAnalysts = analysts.filter(d => d.black == 'Yes').length;
+    let percentageAnalysts = Math.round(totalBlackAnalysts * 100 / philoAnalysts.length)
+
+    divAnalysts.html("<span id='nfl-bold'>Analysts</span><br><span id='nfl-bold'>" + totalBlackAnalysts + "</span>/" + philoAnalysts.length + " <span id='nfl-bold-black'>"+ percentageAnalysts + "%</span>")
 
     let philoPBP = d3.range(pbp.length).map(phyllotaxis(smallPhyllotaxisRadius));
 
@@ -178,11 +224,32 @@ function ready(data){
 	.attr('cx', d => d.x)
     .attr('cy', d => d.y)
     .attr('transform', 'translate(' + (smallWidth /2) + ',' + (smallWidth /2) + ')')
-    .on('mouseover', d => printTooltip('over',svgPBP, pbp[d.index]))
-    .on('mouseout', d => printTooltip('out',svgPBP, pbp[d.index]))
+
+    let points3 = []
+
+    philoPBP.map(d=> {
+		points3.push([+d.x + smallWidth /2, +d.y + smallWidth /2])
+	})
+
+	const polygons3 = voronoi(points3).polygons();
+
+    let cells3 = svgPBP.selectAll(".cell")
+	.data(polygons3)
+	.enter()
+	.append("path")
+	.attr("class", (d,i) => {return "cell" + i})
+	.attr("opacity", 0)
+	.attr("stroke", "black")
+	.attr("d", (d,i) => {return "M" + d.join("L") + "Z"})
+	.attr('clip-path', "url(#cut-off)")
+	.on('mouseover', (d,i) => {printTooltip('over', svgPBP, pbp[i])})
+	.on('mouseout', (d,i) => {printTooltip('out', svgPBP, pbp[i])})
     .on("mousemove", mousemove)
 
-    divPBP.html(pbp.filter(d => d.black == 'Yes').length + "/" +philoPBP.length)
+    let totalBlackPBP = pbp.filter(d => d.black == 'Yes').length;
+    let percentagePBP = Math.round(totalBlackPBP * 100 / philoPBP.length)
+
+    divPBP.html("<span id='nfl-bold'>Play-by-play</span><br><span id='nfl-bold'>" + totalBlackPBP + "</span>/" + philoPBP.length + " <span id='nfl-bold-black'>"+ percentagePBP + "%</span>")
 
     let philoSideline = d3.range(sidelines.length).map(phyllotaxis(smallPhyllotaxisRadius));
 
@@ -203,12 +270,33 @@ function ready(data){
 	.attr('cx', d => d.x)
     .attr('cy', d => d.y)
     .attr('transform', 'translate(' + (smallWidth /2) + ',' + (smallWidth /2) + ')')
-    .on('mouseover', d => printTooltip('over', svgSideline, sidelines[d.index]))
-    .on('mouseout', d => printTooltip('out', svgSideline, sidelines[d.index]))
+
+    let points4 = []
+
+    philoSideline.map(d=> {
+		points4.push([+d.x + smallWidth /2, +d.y + smallWidth /2])
+	})
+
+	const polygons4 = voronoi(points4).polygons();
+
+    let cells4 = svgSideline.selectAll(".cell")
+	.data(polygons4)
+	.enter()
+	.append("path")
+	.attr("class", (d,i) => {return "cell" + i})
+	.attr("opacity", 0)
+	.attr("stroke", "black")
+	.attr("d", (d,i) => {return "M" + d.join("L") + "Z"})
+	.attr('clip-path', "url(#cut-off)")
+	.on('mouseover', (d,i) => {printTooltip('over', svgSideline, sidelines[i])})
+	.on('mouseout', (d,i) => {printTooltip('out', svgSideline, sidelines[i])})
     .on("mousemove", mousemove)
 
 
-    divSideline.html(sidelines.filter(d => d.black == 'Yes').length + "/" + philoSideline.length)
+    let totalBlackSideline = sidelines.filter(d => d.black == 'Yes').length;
+    let percentageSideline = Math.round(totalBlackSideline * 100 / philoSideline.length)
+
+    divSideline.html("<span id='nfl-bold'>Sidelines</span><br><span id='nfl-bold'>" + totalBlackSideline + "</span>/" + philoSideline.length + " <span id='nfl-bold-black'>"+ percentageSideline + "%</span>")
 
     function mousemove(event) {
     	 
@@ -261,7 +349,7 @@ function printTooltip(event,enviroment, node){
 		circle.style('stroke-width','3px')
 
 		tooltip.classed(" over", true);
-		tooltip.select('#tooltip-name').html(node.name)
+		tooltip.select('#tooltip-name').html(node.name.replace('"', " "))
 	}
 	else{
 

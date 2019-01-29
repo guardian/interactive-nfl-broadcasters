@@ -46,9 +46,18 @@
   color: #333;
 }
 
-#nfl-standfirst-black{
+#nfl-standfirst-black, #nfl-bold-black{
   color: #C70000;
 }
+
+#nfl-bold-black{
+  font-weight: 800;
+}
+
+#nfl-bold{
+  font-weight: 800;
+}
+
 
 .Yes{
   fill:#C70000;
