@@ -5,8 +5,6 @@ import * as d3Queue from 'd3-queue'
 import * as d3Voronoi from 'd3-voronoi'
 import { $ } from "./util"
 
-console.log('hello')
-
 let d3 = Object.assign({}, d3B, d3Select, d3Queue);
 
 let allWidth = 280;
