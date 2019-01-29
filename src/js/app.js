@@ -9,38 +9,15 @@ console.log('hello')
 
 let d3 = Object.assign({}, d3B, d3Select, d3Queue);
 
-const mapEl = $(".interactive-wrapper");
-
-let width = mapEl.getBoundingClientRect().width;
-
-let isMobile
-
-if(width < 400)
-{
-	isMobile = true
-}
-else
-{
-	isMobile = false
-}
-
-let allWidth = 300;
-let smallWidth = 200;
-let radius = 140;
+let allWidth = 280;
+let smallWidth = 180;
+let radius = 120;
 let pointRadius = 5.5;
-let phyllotaxisRadius = 9;
-let smallPhyllotaxisRadius = 10;
+let phyllotaxisRadius = 8;
+let smallPhyllotaxisRadius = 8;
 let padding = 12;
 
 let tooltip = d3.select('#nfl-tooltip')
-
-if(width > 400){
-	allWidth = 330;
-	smallWidth = 180;
-	radius = 150;
-	phyllotaxisRadius = 10;
-	smallPhyllotaxisRadius = 8.5;
-}
 
 let voronoi = d3.voronoi()
 .extent([[-1, -1], [allWidth + 1, allWidth + 1]]);
@@ -314,6 +291,8 @@ function ready(data){
 			tooltip.style('left', width - tWidth - padding + 'px')
 		}
 	}
+
+	window.resize()
 }
 
 

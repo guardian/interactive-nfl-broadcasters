@@ -2,40 +2,50 @@
 @import "fonts";
 @import "palette";
 // Uncomment for embeds
-//@import "embed";
+@import "embed";
 // Uncomment for full screen (including immersive article main media)
 //@import "fullscreen";
 
-.element.element-atom,
-.interactive.interactive-atom{
-  margin-left: 0px !important;
+// .element.element-atom,
+// .interactive.interactive-atom{
+//   margin-left: 0px !important;
 
-  margin-bottom: 20px !important;
+//   margin-bottom: 20px !important;
 
-    @include mq(desktop){
-      margin-left: 0px !important;
-    }
-    @include mq(leftCol) {
-      margin-left: 40px !important;
-    }
-    @include mq(wide) {
-      margin-left: 60px !important;
-    }
+//     @include mq(860px){
+//       margin-left: 0px !important;
+//     }
+//     @include mq(leftCol) {
+//       margin-left: 40px !important;
+//     }
+//     @include mq(wide) {
+//       margin-left: 60px !important;
+//     }
+// }
+
+// .element-atom {
+//   border-top: 1px solid #dcdcdc;
+//   border-bottom: 1px solid #dcdcdc;
+// }
+
+.interactive-wrapper {
+  border-top: 1px solid #dcdcdc;
+  border-bottom: 1px solid #dcdcdc;
 }
-
 
 .nfl-standfirst {
   @include fs-headline(3);
   font-weight: 200;
   max-width: 280px;
 
-  @include mq(tablet) {
+  @include mq(620px) {
     max-width: 480px;
     font-size: 22px;
     line-height: 25px;
   }
 
   margin-bottom: 12px;
+  margin-top: 12px;
 }
 .nfl-standfirst span{
   @include fs-headline(3);
@@ -75,13 +85,12 @@
   display: flex;
   position: relative;
 
-  @include mq(mobile){
-      flex-direction: column;
-    }
+  margin-bottom: 12px;
+  flex-direction: column;
 
-
-  @include mq(desktop){
+  @include mq(860px){
       flex-direction: row;
+      margin-bottom: 12px;
     }
 }
 
@@ -89,40 +98,37 @@
 
   display: flex;
 
-  @include mq(mobile) {
     flex-direction: column;
     align-self:flex-start;
-  }
+
   
-  @include mq(tablet) {
+  @include mq(620px) {
     flex-direction: row;
     align-self:flex-start;
   }
 
-  @include mq(desktop) {
+  @include mq(860px) {
     flex-direction: row;
     align-self:flex-end;
   }
 }
 
 #all-broadcasters{
-  margin-right: 20px;
-  @include mq(mobile) {
-    margin-bottom: 20px
-  }
-  @include mq(desktop) {
+  /*margin-right: 10px;*/
+  margin-bottom: 20px;
+  @include mq(860px) {
     margin-bottom: 0px
   }
 }
 
 .small-multiple-wrapper{
-  margin: 0 20px 0 0;
+  /*margin: 0 10px 0 0;*/
 
-  @include mq(mobile) {
-    margin-bottom: 20px
-  }
-  @include mq(desktop) {
-    margin-bottom: 0px
+  margin-bottom: 20px;
+
+
+  @include mq(860px) {
+    margin-bottom: 0px;
   }
 }
 
