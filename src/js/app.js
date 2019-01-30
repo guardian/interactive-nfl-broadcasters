@@ -10,7 +10,7 @@ let d3 = Object.assign({}, d3B, d3Select, d3Queue);
 let allWidth = 280;
 let smallWidth = 180;
 let radius = 120;
-let pointRadius = 5.5;
+let pointRadius = 4;
 let phyllotaxisRadius = 8;
 let smallPhyllotaxisRadius = 8;
 let padding = 12;
@@ -20,28 +20,23 @@ let tooltip = d3.select('#nfl-tooltip')
 let voronoi = d3.voronoi()
 .extent([[-1, -1], [allWidth + 1, allWidth + 1]]);
 
+let divAll = d3.select("#all-broadcasters")
+.append('div')
+.append('span')
+.attr('class', 'sub-header')
 
 let svgAll = d3.select("#all-broadcasters")
 .append('svg')
 .attr("width", allWidth)
 .attr("height", allWidth)
 
-let divAll = d3.select("#all-broadcasters")
-.append('div')
-.append('span')
-.attr('class', 'sub-header')
-
-let svgAnalysts = d3.select("#analyst-wrapper")
-.append('svg')
-.attr("width", smallWidth)
-.attr("height", smallWidth)
-
 let divAnalysts = d3.select("#analyst-wrapper")
 .append('div')
 .append('span')
 .attr('class', 'sub-header')
 
-let svgPBP = d3.select("#pbp-wrapper")
+
+let svgAnalysts = d3.select("#analyst-wrapper")
 .append('svg')
 .attr("width", smallWidth)
 .attr("height", smallWidth)
@@ -51,7 +46,7 @@ let divPBP = d3.select("#pbp-wrapper")
 .append('span')
 .attr('class', 'sub-header')
 
-let svgSideline = d3.select("#sideline-wrapper")
+let svgPBP = d3.select("#pbp-wrapper")
 .append('svg')
 .attr("width", smallWidth)
 .attr("height", smallWidth)
@@ -60,6 +55,13 @@ let divSideline = d3.select("#sideline-wrapper")
 .append('div')
 .append('span')
 .attr('class', 'sub-header')
+
+let svgSideline = d3.select("#sideline-wrapper")
+.append('svg')
+.attr("width", smallWidth)
+.attr("height", smallWidth)
+
+
 
 Promise.all([
 	d3.csv("<%= path %>/assets/broadcasters - Sheet1.csv")
@@ -265,7 +267,7 @@ function ready(data){
 	.attr('clip-path', "url(#cut-off)")
 	.on('mouseover', (d,i) => {printTooltip('over', svgSideline, sidelines[i])})
 	.on('mouseout', (d,i) => {printTooltip('out', svgSideline, sidelines[i])})
-    .on("mousemove", ()=> {mousemove(smallWidth) })
+    .on("mousemove", ()=> {mousemove(300) })
 
 
     let totalBlackSideline = sidelines.filter(d => d.black == 'Yes').length;
